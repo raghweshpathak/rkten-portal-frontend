@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "http://13.127.132.26:5000";
 
 function Dashboard() {
   const token = localStorage.getItem("token");

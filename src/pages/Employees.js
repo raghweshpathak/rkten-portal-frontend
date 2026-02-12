@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API = "http://localhost:5000";
+const API = "http://13.127.132.26:5000";
 
 function Employees() {
   const token = localStorage.getItem("token");
@@ -10,23 +10,23 @@ function Employees() {
     headers: { Authorization: `Bearer ${token}` }
   };
 
-  const [employees, setEmployees] = useState([]);
-
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: "",
     email: "",
     role: "",
-    salary: ""
-  });
+    salary: "",
+    password: ""
+  };
 
+  const [employees, setEmployees] = useState([]);
+  const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
-
-  // 🔍 search
   const [search, setSearch] = useState("");
-
-  // 📄 pagination
   const [page, setPage] = useState(1);
+
   const perPage = 5;
+
+  /* ================= FETCH ================= */
 
   const fetchEmployees = async () => {
     const res = await axios.get(`${API}/employees`, authHeader);
@@ -37,49 +37,69 @@ function Employees() {
     fetchEmployees();
   }, []);
 
-  // ADD
+  /* ================= ADD ================= */
+
   const addEmployee = async () => {
-    await axios.post(`${API}/employees`, form, authHeader);
-    setForm({ name: "", email: "", role: "", salary: "" });
+    const res = await axios.post(`${API}/employees`, form, authHeader);
+
+    if (res.data.defaultPassword) {
+      alert("Default password: " + res.data.defaultPassword);
+    }
+
+    setForm(emptyForm);
     fetchEmployees();
   };
 
-  // UPDATE
+  /* ================= UPDATE ================= */
+
   const updateEmployee = async () => {
     await axios.put(`${API}/employees/${editingId}`, form, authHeader);
+
     setEditingId(null);
-    setForm({ name: "", email: "", role: "", salary: "" });
+    setForm(emptyForm);
     fetchEmployees();
   };
 
-  // DELETE
+  /* ================= DELETE ================= */
+
   const deleteEmployee = async (id) => {
     await axios.delete(`${API}/employees/${id}`, authHeader);
     fetchEmployees();
   };
 
+  /* ================= EDIT ================= */
+
   const startEdit = (e) => {
-    setForm(e);
+    setForm({ ...e, password: "" });
     setEditingId(e._id);
   };
 
-  // 🔍 filter
+  /* ================= SEARCH ================= */
+
   const filtered = employees.filter(
     (e) =>
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.email.toLowerCase().includes(search.toLowerCase())
+      e.name?.toLowerCase().includes(search.toLowerCase()) ||
+      e.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 📄 paginate
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  /* ================= PAGINATION ================= */
+
   const start = (page - 1) * perPage;
   const paginated = filtered.slice(start, start + perPage);
+
+  /* ================= UI ================= */
 
   return (
     <div className="p-8">
       <h2 className="text-2xl font-bold mb-4">Employees</h2>
 
       {/* FORM */}
-      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-4 gap-3">
+      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-5 gap-3">
+
         {["name", "email", "role", "salary"].map((field) => (
           <input
             key={field}
@@ -92,9 +112,19 @@ function Employees() {
           />
         ))}
 
+        {/* PASSWORD */}
+        <input
+          className="border p-2 rounded"
+          placeholder="password (optional)"
+          value={form.password}
+          onChange={(e) =>
+            setForm({ ...form, password: e.target.value })
+          }
+        />
+
         <button
           onClick={editingId ? updateEmployee : addEmployee}
-          className="bg-green-600 text-white px-4 py-2 rounded col-span-4"
+          className="bg-green-600 text-white px-4 py-2 rounded col-span-5"
         >
           {editingId ? "Update Employee" : "Add Employee"}
         </button>
@@ -172,3 +202,4 @@ function Employees() {
 }
 
 export default Employees;
+
